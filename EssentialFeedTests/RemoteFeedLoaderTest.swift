@@ -87,7 +87,6 @@ class RemoteFeedLoaderTests : XCTestCase{
                               description: "a description",
                               location : "a location",
                               imageURL : URL(string: "https://aurl.com")!)
-        
  
         let items = [item1.model, item2.model]
         expect(sut, toCompleteWithResult: .success(items)) {
@@ -157,8 +156,5 @@ class RemoteFeedLoaderTests : XCTestCase{
             let response = HTTPURLResponse(url: requestedURLs[index],statusCode: code,httpVersion: nil, headerFields: nil)!
             messages[index].completion(.success(data,response))
         }
-        
-    }
-
- 
-}
+     }
+ }
