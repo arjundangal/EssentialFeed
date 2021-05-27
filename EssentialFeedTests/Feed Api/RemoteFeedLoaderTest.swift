@@ -34,11 +34,11 @@ class RemoteFeedLoaderTests : XCTestCase{
     func test_load_deliversErrorOnClientError(){
         let (sut, client)  = makeSUT()
         
-        expect(sut, toCompleteWithResult: .failure(RemoteFeedLoader.Error.connectivity)) {
+        expect(sut, toCompleteWithResult: failure(.connectivity), when:  {
             let clientError =  NSError(domain: "Test", code: 0)
             client.complete(with: clientError)
 
-        }
+        })
      }
 
     
@@ -47,32 +47,32 @@ class RemoteFeedLoaderTests : XCTestCase{
        
         let samples = [199,201,300]
         samples.enumerated().forEach { (index,code) in
-            expect(sut, toCompleteWithResult: .failure(RemoteFeedLoader.Error.invalidData)) {
+            expect(sut, toCompleteWithResult: failure(.invalidData), when:  {
                 let json = makeItemsJSON([])
                 client.complete(withStatusCode: code, data: json ,at: index)
-             }
+             })
         }
      }
     
     
     func test_load_deliverssErrorOn200HTTPResponseWithInvalidJSON(){
         let (sut, client)  = makeSUT()
-        expect(sut, toCompleteWithResult: .failure(RemoteFeedLoader.Error.invalidData)) {
+        expect(sut, toCompleteWithResult: failure(.invalidData), when:  {
             let invalidJSON = Data("invalidJson".utf8)
 
             client.complete(withStatusCode: 200, data : invalidJSON)
-         }
+         })
         
     }
     
     func test_load_deliversNoItemsOn200HTTPResponseWithEmptyJSONList(){
         let (sut, client) = makeSUT()
  
-         expect(sut, toCompleteWithResult: .success([])) {
+        expect(sut, toCompleteWithResult: .success([]), when:  {
             let emptyListJSON = Data("{\"items\" : []}".utf8)
             client.complete(withStatusCode: 200, data: emptyListJSON)
 
-        }
+        })
         
     }
   
@@ -89,10 +89,10 @@ class RemoteFeedLoaderTests : XCTestCase{
                               imageURL : URL(string: "https://aurl.com")!)
  
         let items = [item1.model, item2.model]
-        expect(sut, toCompleteWithResult: .success(items)) {
+        expect(sut, toCompleteWithResult: .success(items), when:  {
             let data = makeItemsJSON([item1.json, item2.json])
              client.complete(withStatusCode: 200, data:  data)
-        }
+        })
     }
     
     func test_load_doesNotDeliverResultAfterSUTHasBeenDeallocated(){
@@ -116,7 +116,13 @@ class RemoteFeedLoaderTests : XCTestCase{
         
     }
     
+    
+    
     //MARK:- Helpers
+    
+    private func failure(_ error : RemoteFeedLoader.Error) -> RemoteFeedLoader.Result{
+        return .failure(error)
+    }
     
     private func makeItem(id : UUID, description : String? = nil, location : String? = nil, imageURL : URL)->(model : FeedItem, json : [String : Any]){
         let item = FeedItem(id: id, description: description, location: location, imageURL: imageURL)
