@@ -18,13 +18,18 @@ class URLSessionHTTPCLient {
     init(session: URLSession = .shared) {
         self.session = session
     }
+    struct UnexpectedValueRepresentationError : Error{
+        
+    }
     
     func get(from url : URL, completion : @escaping (HTTPClientResult) -> Void){
  
         session.dataTask(with: url) { (data, response, error) in
             if let error = error {
                 completion(.failure(error))
-             }
+            }else{
+                completion(.failure(UnexpectedValueRepresentationError()))
+            }
          }.resume()
     }
 }
@@ -63,7 +68,7 @@ class URLSessionHTTPClientTest : XCTestCase{
     func test_getFromURL_failsOnRequestError(){
          let url = anyURL()
         let error = NSError(domain: "any error", code: 1)
-        URLProtocolStub.stub(url : url, data : nil, response : nil, error : error)
+        URLProtocolStub.stub(data : nil, response : nil, error : error)
         
  
         let exp = expectation(description: "wait for completion")
@@ -82,6 +87,28 @@ class URLSessionHTTPClientTest : XCTestCase{
         wait(for: [exp], timeout: 2)
      }
 
+    
+    func test_getFromURL_failsOnAllNilValues(){
+        URLProtocolStub.stub(data : nil, response : nil, error : nil)
+        
+ 
+        let exp = expectation(description: "wait for completion")
+        
+        makeSUT().get(from : anyURL() ){result in
+            switch result {
+            case let .failure(receivedError as NSError):
+                XCTAssertNotNil(receivedError)
+            default :
+                XCTFail("Expected failure Got \(result) i nstead")
+            }
+            
+            exp.fulfill()
+            
+        }
+        wait(for: [exp], timeout: 2)
+     }
+
+    
     //MARK:- Helpers
     
     private func makeSUT(file : StaticString =  #filePath, line : UInt = #line) -> URLSessionHTTPCLient {
@@ -109,7 +136,7 @@ class URLSessionHTTPClientTest : XCTestCase{
         
         
         
-        static  func stub(url : URL, data : Data?, response : URLResponse?, error : Error?){
+        static  func stub(data : Data?, response : URLResponse?, error : Error?){
             stub = Stub(error: error,data: data,response: response)
         }
         
