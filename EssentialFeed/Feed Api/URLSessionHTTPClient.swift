@@ -11,7 +11,7 @@ public class URLSessionHTTPCLient : HTTPClient {
 
      private let session : URLSession
     
-    init(session: URLSession = .shared) {
+    public init(session: URLSession = .shared) {
         self.session = session
     }
     struct UnexpectedValueRepresentationError : Error{
