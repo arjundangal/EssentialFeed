@@ -27,7 +27,9 @@ class URLSessionHTTPCLient {
         session.dataTask(with: url) { (data, response, error) in
             if let error = error {
                 completion(.failure(error))
-            }else{
+            }else if let data = data, let response = response as? HTTPURLResponse{
+                completion(.success(data, response))
+            } else{
                 completion(.failure(UnexpectedValueRepresentationError()))
             }
          }.resume()
@@ -83,7 +85,7 @@ class URLSessionHTTPClientTest : XCTestCase{
     }
     
     func test_getFromURL_failsOnAllInvalidRepresentationCases(){
-         XCTAssertNotNil(resultErrorFor(data: nil, response: nil, error: nil))
+        XCTAssertNotNil(resultErrorFor(data: nil, response: nil, error: nil))
         XCTAssertNotNil(resultErrorFor(data: nil, response: nonHTTPURLResponse(), error: nil))
         XCTAssertNotNil(resultErrorFor(data: nil, response: anyHTTPURLResponse(), error: nil))
         XCTAssertNotNil(resultErrorFor(data: anyData(), response: nil, error: nil))
@@ -95,6 +97,29 @@ class URLSessionHTTPClientTest : XCTestCase{
         XCTAssertNotNil(resultErrorFor(data: anyData(), response: nonHTTPURLResponse(), error: nil))
 
      }
+    
+    func test_getFromURL_succeedsWithEmptyOnHTTPURLResponseWithNilData(){
+         let response = anyHTTPURLResponse()
+        
+        URLProtocolStub.stub(data: nil, response: response, error: nil)
+        
+        let exp = expectation(description: "Waiting for request to complete")
+        makeSUT().get(from: anyURL()) { (result) in
+            switch result{
+            case let .success(receivedData, receivedResponse):
+                let emptyData = Data()
+                XCTAssertEqual(receivedData, emptyData)
+                XCTAssertEqual(receivedResponse.url, response?.url)
+            default:
+                XCTFail("Expected success but got \(result) instead")
+                
+            }
+            exp.fulfill()
+        }
+        
+        wait(for: [exp], timeout: 1.0)
+        
+    }
 
     
     //MARK:- Helpers
@@ -205,6 +230,7 @@ class URLSessionHTTPClientTest : XCTestCase{
         static func stopInterceptingRequest(){
             URLProtocol.unregisterClass(URLProtocolStub.self)
             stub = nil
+            requestObserver = nil
         }
         
         override func stopLoading() {
