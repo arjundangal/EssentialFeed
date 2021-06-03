@@ -40,11 +40,11 @@ class URLSessionHTTPCLient {
 
 class URLSessionHTTPClientTest : XCTestCase{
     
-    override class func setUp() {
+    override  func setUp() {
         URLProtocolStub.startInterceptingRequest()
     }
     
-    override class func tearDown() {
+    override  func tearDown() {
         URLProtocolStub.stopInterceptingRequest()
 
     }
@@ -87,7 +87,6 @@ class URLSessionHTTPClientTest : XCTestCase{
     func test_getFromURL_failsOnAllInvalidRepresentationCases(){
         XCTAssertNotNil(resultErrorFor(data: nil, response: nil, error: nil))
         XCTAssertNotNil(resultErrorFor(data: nil, response: nonHTTPURLResponse(), error: nil))
-        XCTAssertNotNil(resultErrorFor(data: nil, response: anyHTTPURLResponse(), error: nil))
         XCTAssertNotNil(resultErrorFor(data: anyData(), response: nil, error: nil))
         XCTAssertNotNil(resultErrorFor(data: anyData(), response: nil, error: nil))
         XCTAssertNotNil(resultErrorFor(data: nil, response: nonHTTPURLResponse(), error: anyNSError()))
@@ -185,6 +184,7 @@ class URLSessionHTTPClientTest : XCTestCase{
     }
     
     private func resultFor(data : Data?, response : URLResponse?, error : Error?, file : StaticString =  #filePath, line : UInt = #line) -> HTTPClientResult{
+        URLProtocolStub.stub(data: data, response: response, error: error)
         let sut = makeSUT(file : file, line : line)
         let exp = expectation(description: "wait for completion")
         var receivedResult  : HTTPClientResult!
