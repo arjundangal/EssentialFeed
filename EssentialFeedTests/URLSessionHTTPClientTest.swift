@@ -11,7 +11,7 @@ import EssentialFeed
 
  
 
-class URLSessionHTTPCLient {
+class URLSessionHTTPCLient : HTTPClient {
 
      private let session : URLSession
     
@@ -122,7 +122,7 @@ class URLSessionHTTPClientTest : XCTestCase{
     
     //MARK:- Helpers
     
-    private func makeSUT(file : StaticString =  #filePath, line : UInt = #line) -> URLSessionHTTPCLient {
+    private func makeSUT(file : StaticString =  #filePath, line : UInt = #line) -> HTTPClient {
         let sut = URLSessionHTTPCLient()
         checkForMemoryLeaks(sut, file: file, line: line)
         return sut
@@ -157,10 +157,7 @@ class URLSessionHTTPClientTest : XCTestCase{
             XCTFail("Expected success.  Got \(result) instead", file: file, line: line)
             return nil
         }
-        
-        
-        
-    }
+       }
     
     private func resultErrorFor(data : Data?, response : URLResponse?, error : Error?, file : StaticString =  #filePath, line : UInt = #line) -> Error? {
         
