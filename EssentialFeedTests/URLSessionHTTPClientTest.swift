@@ -81,6 +81,25 @@ class URLSessionHTTPClientTest : XCTestCase{
         
         XCTAssertNotNil(receivedError)
     }
+    
+    func test_getFromURL_failsOnAllInvalidRepresentationCases(){
+        let nonHTTPURLResponse = URLResponse(url: anyURL(), mimeType: nil, expectedContentLength: 0, textEncodingName: nil)
+        let anyHTTPURLResponse = HTTPURLResponse(url: anyURL(), statusCode: 200, httpVersion: nil, headerFields: nil)
+        let anyData = Data("anyData".utf8)
+        let anyError = NSError(domain : "anyError", code: 1)
+        
+        XCTAssertNotNil(resultErrorFor(data: nil, response: nil, error: nil))
+        XCTAssertNotNil(resultErrorFor(data: nil, response: nonHTTPURLResponse, error: nil))
+        XCTAssertNotNil(resultErrorFor(data: nil, response: anyHTTPURLResponse, error: nil))
+        XCTAssertNotNil(resultErrorFor(data: anyData, response: nil, error: nil))
+        XCTAssertNotNil(resultErrorFor(data: anyData, response: nil, error: nil))
+        XCTAssertNotNil(resultErrorFor(data: nil, response: nonHTTPURLResponse, error: anyError))
+        XCTAssertNotNil(resultErrorFor(data: nil, response: anyHTTPURLResponse, error: anyError))
+        XCTAssertNotNil(resultErrorFor(data: anyData, response: anyHTTPURLResponse, error: anyError))
+        XCTAssertNotNil(resultErrorFor(data: anyData, response: nonHTTPURLResponse, error: anyError))
+        XCTAssertNotNil(resultErrorFor(data: anyData, response: nonHTTPURLResponse, error: nil))
+
+     }
 
     
     //MARK:- Helpers
@@ -91,7 +110,7 @@ class URLSessionHTTPClientTest : XCTestCase{
         return sut
     }
     
-    private func resultErrorFor(data : Data?, response : HTTPURLResponse?, error : Error?, file : StaticString =  #filePath, line : UInt = #line) -> Error? {
+    private func resultErrorFor(data : Data?, response : URLResponse?, error : Error?, file : StaticString =  #filePath, line : UInt = #line) -> Error? {
             URLProtocolStub.stub(data : data, response : response, error : error)
 
             let exp = expectation(description: "wait for completion")
