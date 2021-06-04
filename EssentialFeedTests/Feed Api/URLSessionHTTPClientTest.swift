@@ -7,20 +7,14 @@
 
 import XCTest
 import EssentialFeed
-
-
  
-
-
-
-
 class URLSessionHTTPClientTest : XCTestCase{
     
-    override  func setUp() {
+    override func setUp() {
         URLProtocolStub.startInterceptingRequest()
     }
     
-    override  func tearDown() {
+    override func tearDown() {
         URLProtocolStub.stopInterceptingRequest()
 
     }
@@ -99,7 +93,7 @@ class URLSessionHTTPClientTest : XCTestCase{
     //MARK:- Helpers
     
     private func makeSUT(file : StaticString =  #filePath, line : UInt = #line) -> HTTPClient {
-        let sut = URLSessionHTTPCLient()
+        let sut = URLSessionHTTPClient()
         checkForMemoryLeaks(sut, file: file, line: line)
         return sut
     }
