@@ -45,8 +45,9 @@ class LocalFeedLoader {
         self.currentDate = currentDate
     }
     
-    func save(_ items : [FeedItem]){
+    func save(_ items : [FeedItem], completion: @escaping (Error?) -> Void){
         store.deleteCachedFeed(items){[unowned self] error in
+            completion(error)
             if error == nil{
                 self.store.insert(items, timestamp: self.currentDate())
             }
@@ -66,7 +67,7 @@ class CachedFeedUseCaseTests: XCTestCase {
         let items = [uniqueItem(), uniqueItem()]
         let (sut,store) = makeSUT()
     
-        sut.save(items)
+        sut.save(items){_ in}
         
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed])
     }
@@ -76,7 +77,7 @@ class CachedFeedUseCaseTests: XCTestCase {
         let (sut,store) = makeSUT()
         let deletionError = anyNSError()
      
-        sut.save(items)
+        sut.save(items){_ in}
         store.completeDeletionError(with: deletionError)
         
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed])
@@ -87,14 +88,30 @@ class CachedFeedUseCaseTests: XCTestCase {
         let items = [uniqueItem(), uniqueItem()]
         let (sut,store) = makeSUT(currentDate : { timeStamp })
  
-        sut.save(items)
+        sut.save(items){_ in}
         store.completeDeletionSuccessfully()
        
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed,.insert(items, timeStamp)])
       }
     
+    func test_save_failsOnDeletionError(){
+        let items = [uniqueItem(), uniqueItem()]
+        let (sut,store) = makeSUT()
+        let deletionError = anyNSError()
+        
+        var receivedError : Error?
+        let exp = expectation(description: "Wait for save completion")
+        sut.save(items){error in
+            receivedError = error
+            exp.fulfill()
+        }
+        store.completeDeletionError(with: deletionError)
+        wait(for: [exp], timeout: 1.0)
+        XCTAssertEqual(receivedError as NSError?, deletionError)
+    }
+ 
+
     //MARK:- Helpers
-    
     private func makeSUT(currentDate : @escaping () -> Date = Date.init,  file : StaticString = #filePath, line : UInt = #line) -> (sut: LocalFeedLoader, store: FeedStore){
         let store = FeedStore()
         let sut = LocalFeedLoader(store: store, currentDate : currentDate)
