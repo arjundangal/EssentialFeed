@@ -54,10 +54,11 @@ class LocalFeedLoader {
     
     func save(_ items : [FeedItem], completion: @escaping (Error?) -> Void){
         store.deleteCachedFeed(items){[unowned self] error in
-            completion(error)
-            print("error", error)
-            if error == nil{
+             if error == nil{
                 self.store.insert(items, timestamp: self.currentDate()){_ in}
+            }else{
+                completion(error)
+
             }
         }
     }
@@ -116,6 +117,7 @@ class CachedFeedUseCaseTests: XCTestCase {
             receivedError = error
             exp.fulfill()
         }
+        store.completeDeletionSuccessfully()
         store.completeDeletion(with: insertionError)
         wait(for: [exp], timeout: 1.0)
         XCTAssertEqual(receivedError as NSError?, insertionError)
