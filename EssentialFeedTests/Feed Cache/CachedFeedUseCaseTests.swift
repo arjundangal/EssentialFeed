@@ -55,6 +55,7 @@ class LocalFeedLoader {
     func save(_ items : [FeedItem], completion: @escaping (Error?) -> Void){
         store.deleteCachedFeed(items){[unowned self] error in
             completion(error)
+            print("error", error)
             if error == nil{
                 self.store.insert(items, timestamp: self.currentDate()){_ in}
             }
@@ -120,7 +121,22 @@ class CachedFeedUseCaseTests: XCTestCase {
         XCTAssertEqual(receivedError as NSError?, deletionError)
     }
  
-    
+    func test_save_failsOnDeletionError(){
+        let items = [uniqueItem(), uniqueItem()]
+        let (sut,store) = makeSUT()
+        let deletionError = anyNSError()
+        
+        var receivedError : Error?
+        let exp = expectation(description: "Wait for save completion")
+        sut.save(items){error in
+            receivedError = error
+            exp.fulfill()
+        }
+        store.completeDeletion(with: deletionError)
+      
+         wait(for: [exp], timeout: 1.0)
+        XCTAssertNotNil(receivedError,"Expected error but found nil insted")
+    }
 
     //MARK:- Helpers
     private func makeSUT(currentDate : @escaping () -> Date = Date.init,  file : StaticString = #filePath, line : UInt = #line) -> (sut: LocalFeedLoader, store: FeedStore){
