@@ -13,6 +13,4 @@ extension XCTestCase {
             XCTAssertNil(instance, "Instance should have been deallocated. Potential Memory Leak",file: file, line:line)
         }
     }
-
-
-}
+ }
