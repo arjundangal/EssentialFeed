@@ -17,7 +17,6 @@ protocol FeedStore {
 }
 
 
-
 class LocalFeedLoader {
     let store : FeedStore
     let currentDate : () -> Date
@@ -27,7 +26,8 @@ class LocalFeedLoader {
     }
     
     func save(_ items : [FeedItem], completion: @escaping (Error?) -> Void){
-        store.deleteCachedFeed(items){[unowned self] error in
+        store.deleteCachedFeed(items){[weak self] error in
+            guard let self = self else {return}
              if error == nil{
                 self.store.insert(items, timestamp: self.currentDate(),completion: completion)
             }else{
@@ -76,9 +76,6 @@ class CachedFeedUseCaseTests: XCTestCase {
        
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed,.insert(items, timeStamp)])
       }
-    
-
- 
     
     func test_save_failsOnInsertionError(){
         let items = [uniqueItem(), uniqueItem()]
@@ -137,6 +134,23 @@ class CachedFeedUseCaseTests: XCTestCase {
     }
     
     
+    func test_save_doesNotDeliverDelitionErrorAfterSUTInstanceHasBeenDeallocated(){
+        let store = FeedStoreSpy()
+        var sut: LocalFeedLoader? = LocalFeedLoader(store: store, currentDate : Date.init)
+
+        var receivedResults : [Error?] = []
+         sut?.save([uniqueItem()]){ error in
+            receivedResults.append(error)
+          }
+        
+         sut = nil
+         store.completeDeletion(with: anyNSError())
+        
+         XCTAssertTrue(receivedResults.isEmpty)
+    }
+
+    
+    
 
     //MARK:- Helpers
     private func makeSUT(currentDate : @escaping () -> Date = Date.init,  file : StaticString = #filePath, line : UInt = #line) -> (sut: LocalFeedLoader, store: FeedStoreSpy){
@@ -146,7 +160,6 @@ class CachedFeedUseCaseTests: XCTestCase {
         checkForMemoryLeaks(sut, file: file, line: line)
         return (sut, store)
     }
-    
     
     private func uniqueItem() -> FeedItem{
         return FeedItem(id: UUID(), description: nil, location: nil, imageURL: anyURL())
@@ -161,7 +174,6 @@ class CachedFeedUseCaseTests: XCTestCase {
      }
     
     private class  FeedStoreSpy: FeedStore {
- 
  
         enum ReceivedMessages : Equatable {
             case deleteCacheFeed
