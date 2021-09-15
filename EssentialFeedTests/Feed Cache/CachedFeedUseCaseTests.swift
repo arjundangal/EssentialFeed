@@ -36,12 +36,16 @@ class FeedStore {
      }
     
     func insert(_ items : [FeedItem], timestamp : Date, completion : @escaping InsertionCompletion){
+        insertionCompletions.append(completion)
         receivedMessages.append(.insert(items, timestamp))
     }
     
     func completeInsertion(with error: Error, at index: Int = 0){
         insertionCompletions[index](error)
     }
+    func completInsertionSuccessfully(at index: Int = 0){
+        insertionCompletions[index](nil)
+     }
 }
 
 class LocalFeedLoader {
@@ -55,7 +59,7 @@ class LocalFeedLoader {
     func save(_ items : [FeedItem], completion: @escaping (Error?) -> Void){
         store.deleteCachedFeed(items){[unowned self] error in
              if error == nil{
-                self.store.insert(items, timestamp: self.currentDate()){_ in}
+                self.store.insert(items, timestamp: self.currentDate(),completion: completion)
             }else{
                 completion(error)
 
@@ -138,6 +142,28 @@ class CachedFeedUseCaseTests: XCTestCase {
       
          wait(for: [exp], timeout: 1.0)
         XCTAssertNotNil(receivedError,"Expected error but found nil insted")
+    }
+    
+    
+    
+    func test_save_succedsOnSuccessfulCacheInsertions(){
+        let items = [uniqueItem(), uniqueItem()]
+        let (sut,store) = makeSUT()
+ 
+        var receivedError : Error?
+        let exp = expectation(description: "Wait for save completion")
+        sut.save(items){ error in
+            receivedError = error
+            exp.fulfill()
+        }
+
+        store.completeDeletionSuccessfully()
+        store.completInsertionSuccessfully()
+        
+        wait(for: [exp], timeout: 1.0)
+
+       
+        XCTAssertNil(receivedError)
     }
     
     
