@@ -8,8 +8,11 @@
 import Foundation
 
 public final class LocalFeedLoader {
-    let store : FeedStore
-    let currentDate : () -> Date
+   private let store : FeedStore
+   private let currentDate : () -> Date
+    
+  public typealias SaveResult = Error?
+    
    public init(store : FeedStore, currentDate: @escaping () -> Date) {
         self.store = store
         self.currentDate = currentDate
