@@ -39,25 +39,23 @@ class CachedFeedUseCaseTests: XCTestCase {
  
     func test_save_requestsNewCacheInsertionWithTimestampOnSuccessfulDeletion(){
         let timeStamp = Date()
-        let items = [uniqueItem(), uniqueItem()]
+        let items = uniqueItems()
         let (sut,store) = makeSUT(currentDate : { timeStamp })
-        let localItems = items.map{LocalFeedItem(id: $0.id, description: $0.description, location: $0.location, imageURL: $0.imageURL)}
+ 
         
-        
-        sut.save(items){_ in}
+        sut.save(items.models){_ in}
         store.completeDeletionSuccessfully()
        
-        XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed,.insert(localItems, timeStamp)])
+        XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed,.insert(items.local, timeStamp)])
       }
     
     func test_save_failsOnInsertionError(){
-        let items = [uniqueItem(), uniqueItem()]
         let (sut,store) = makeSUT()
         let insertionError = anyNSError()
         
         var receivedError : Error?
         let exp = expectation(description: "Wait for save completion")
-        sut.save(items){error in
+        sut.save(uniqueItems().models){error in
             receivedError = error
             exp.fulfill()
         }
@@ -68,13 +66,12 @@ class CachedFeedUseCaseTests: XCTestCase {
     }
  
     func test_save_failsOnDeletionError(){
-        let items = [uniqueItem(), uniqueItem()]
-        let (sut,store) = makeSUT()
+         let (sut,store) = makeSUT()
         let deletionError = anyNSError()
         
         var receivedError : Error?
         let exp = expectation(description: "Wait for save completion")
-        sut.save(items){error in
+        sut.save(uniqueItems().models){error in
             receivedError = error
             exp.fulfill()
         }
@@ -87,12 +84,11 @@ class CachedFeedUseCaseTests: XCTestCase {
     
     
     func test_save_succedsOnSuccessfulCacheInsertions(){
-        let items = [uniqueItem(), uniqueItem()]
         let (sut,store) = makeSUT()
  
         var receivedError : Error?
         let exp = expectation(description: "Wait for save completion")
-        sut.save(items){ error in
+        sut.save(uniqueItems().models){ error in
             receivedError = error
             exp.fulfill()
         }
@@ -152,6 +148,12 @@ class CachedFeedUseCaseTests: XCTestCase {
     
     private func uniqueItem() -> FeedItem{
         return FeedItem(id: UUID(), description: nil, location: nil, imageURL: anyURL())
+    }
+    
+    private func uniqueItems() -> (models: [FeedItem], local: [LocalFeedItem]){
+        let models = [uniqueItem(),uniqueItem()]
+        let local = models.map{LocalFeedItem(id: $0.id, description: $0.description, location: $0.location, imageURL: $0.imageURL)}
+        return (models,local)
     }
     
     private func anyURL() -> URL{
