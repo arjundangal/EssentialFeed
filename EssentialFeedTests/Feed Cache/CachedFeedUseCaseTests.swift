@@ -8,10 +8,10 @@
 import XCTest
 import EssentialFeed
 
- 
+
 
 class CachedFeedUseCaseTests: XCTestCase {
-
+    
     func test_init_doesNotMessageStoreUponCreation(){
         let (_,store) = makeSUT()
         XCTAssertEqual(store.receivedMessages, [])
@@ -20,7 +20,7 @@ class CachedFeedUseCaseTests: XCTestCase {
     func test_save_requestsCacheDeletion(){
         let items = [uniqueItem(), uniqueItem()]
         let (sut,store) = makeSUT()
-    
+        
         sut.save(items){_ in}
         
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed])
@@ -30,24 +30,24 @@ class CachedFeedUseCaseTests: XCTestCase {
         let items = [uniqueItem(), uniqueItem()]
         let (sut,store) = makeSUT()
         let deletionError = anyNSError()
-     
+        
         sut.save(items){_ in}
         store.completeDeletion(with: deletionError)
         
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed])
     }
- 
+    
     func test_save_requestsNewCacheInsertionWithTimestampOnSuccessfulDeletion(){
         let timeStamp = Date()
         let items = uniqueItems()
         let (sut,store) = makeSUT(currentDate : { timeStamp })
- 
+        
         
         sut.save(items.models){_ in}
         store.completeDeletionSuccessfully()
-       
+        
         XCTAssertEqual(store.receivedMessages, [.deleteCacheFeed,.insert(items.local, timeStamp)])
-      }
+    }
     
     func test_save_failsOnInsertionError(){
         let (sut,store) = makeSUT()
@@ -64,9 +64,9 @@ class CachedFeedUseCaseTests: XCTestCase {
         wait(for: [exp], timeout: 1.0)
         XCTAssertEqual(receivedError as NSError?, insertionError)
     }
- 
+    
     func test_save_failsOnDeletionError(){
-         let (sut,store) = makeSUT()
+        let (sut,store) = makeSUT()
         let deletionError = anyNSError()
         
         var receivedError : Error?
@@ -76,8 +76,8 @@ class CachedFeedUseCaseTests: XCTestCase {
             exp.fulfill()
         }
         store.completeDeletion(with: deletionError)
-      
-         wait(for: [exp], timeout: 1.0)
+        
+        wait(for: [exp], timeout: 1.0)
         XCTAssertNotNil(receivedError,"Expected error but found nil insted")
     }
     
@@ -85,20 +85,20 @@ class CachedFeedUseCaseTests: XCTestCase {
     
     func test_save_succedsOnSuccessfulCacheInsertions(){
         let (sut,store) = makeSUT()
- 
+        
         var receivedError : Error?
         let exp = expectation(description: "Wait for save completion")
         sut.save(uniqueItems().models){ error in
             receivedError = error
             exp.fulfill()
         }
-
+        
         store.completeDeletionSuccessfully()
         store.completInsertionSuccessfully()
         
         wait(for: [exp], timeout: 1.0)
-
-       
+        
+        
         XCTAssertNil(receivedError)
     }
     
@@ -106,37 +106,37 @@ class CachedFeedUseCaseTests: XCTestCase {
     func test_save_doesNotDeliverDelitionErrorAfterSUTInstanceHasBeenDeallocated(){
         let store = FeedStoreSpy()
         var sut: LocalFeedLoader? = LocalFeedLoader(store: store, currentDate : Date.init)
-
+        
         var receivedResults : [LocalFeedLoader.SaveResult] = []
-         sut?.save([uniqueItem()]){ error in
+        sut?.save([uniqueItem()]){ error in
             receivedResults.append(error)
-          }
+        }
         
-         sut = nil
-         store.completeDeletion(with: anyNSError())
+        sut = nil
+        store.completeDeletion(with: anyNSError())
         
-         XCTAssertTrue(receivedResults.isEmpty)
+        XCTAssertTrue(receivedResults.isEmpty)
     }
-
+    
     func test_save_doesNotDelicerInsertionErrorAfterSUTInstanceHasBeenDeallocated(){
         let store = FeedStoreSpy()
         var sut: LocalFeedLoader? = LocalFeedLoader(store: store, currentDate : Date.init)
-
+        
         var receivedResults : [LocalFeedLoader.SaveResult] = []
-         sut?.save([uniqueItem()]){ error in
+        sut?.save([uniqueItem()]){ error in
             receivedResults.append(error)
-          }
+        }
         store.completeDeletionSuccessfully()
-         sut = nil
+        sut = nil
         
-         store.completeInsertion(with: anyNSError())
+        store.completeInsertion(with: anyNSError())
         
-         XCTAssertTrue(receivedResults.isEmpty)
+        XCTAssertTrue(receivedResults.isEmpty)
     }
-
     
     
-
+    
+    
     //MARK:- Helpers
     private func makeSUT(currentDate : @escaping () -> Date = Date.init,  file : StaticString = #filePath, line : UInt = #line) -> (sut: LocalFeedLoader, store: FeedStoreSpy){
         let store = FeedStoreSpy()
@@ -162,31 +162,31 @@ class CachedFeedUseCaseTests: XCTestCase {
     
     private func anyNSError() -> NSError{
         return NSError(domain : "anyError", code: 1)
-     }
+    }
     
     private class  FeedStoreSpy: FeedStore {
- 
+        
         enum ReceivedMessages : Equatable {
             case deleteCacheFeed
             case insert([LocalFeedItem], Date)
         }
         var deletionCompletions = [DeletionCompletion]()
         var insertionCompletions = [DeletionCompletion]()
-
+        
         private(set) var receivedMessages = [ReceivedMessages]()
         
         func deleteCachedFeed(_ items : [FeedItem], completion : @escaping DeletionCompletion){
             deletionCompletions.append(completion)
             receivedMessages.append(.deleteCacheFeed)
-          }
+        }
         
         func completeDeletion(with error: Error, at index: Int = 0){
             deletionCompletions[index](error)
         }
-     
+        
         func completeDeletionSuccessfully(at index: Int = 0){
             deletionCompletions[index](nil)
-         }
+        }
         
         func insert(_ items : [LocalFeedItem], timestamp : Date, completion : @escaping InsertionCompletion){
             insertionCompletions.append(completion)
@@ -198,7 +198,7 @@ class CachedFeedUseCaseTests: XCTestCase {
         }
         func completInsertionSuccessfully(at index: Int = 0){
             insertionCompletions[index](nil)
-         }
+        }
     }
     
 }
