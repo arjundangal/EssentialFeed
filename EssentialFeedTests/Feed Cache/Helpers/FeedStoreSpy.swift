@@ -10,9 +10,6 @@ import EssentialFeed
 
 
 internal class FeedStoreSpy: FeedStore {
-    func retrieve() {
-        receivedMessages.append(.retrieval)
-    }
     
     enum ReceivedMessages : Equatable {
         case retrieval
@@ -21,6 +18,7 @@ internal class FeedStoreSpy: FeedStore {
     }
     var deletionCompletions = [DeletionCompletion]()
     var insertionCompletions = [DeletionCompletion]()
+    var retrievalCompletions = [RetrievalCompletion]()
     
     private(set) var receivedMessages = [ReceivedMessages]()
     
@@ -49,5 +47,14 @@ internal class FeedStoreSpy: FeedStore {
         insertionCompletions[index](nil)
     }
     
+    func retrieve(completion: @escaping RetrievalCompletion) {
+        retrievalCompletions.append(completion)
+        receivedMessages.append(.retrieval)
+     }
+
+    
+    func completeRetrieval(with error: Error, at index: Int = 0){
+        retrievalCompletions[index](error)
+     }
    
 }
