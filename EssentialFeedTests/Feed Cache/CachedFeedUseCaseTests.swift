@@ -146,11 +146,11 @@ class CachedFeedUseCaseTests: XCTestCase {
         return (sut, store)
     }
     
-    private func uniqueImage() -> FeedItem{
-        return FeedItem(id: UUID(), description: nil, location: nil, imageURL: anyURL())
+    private func uniqueImage() -> FeedImage{
+        return FeedImage(id: UUID(), description: nil, location: nil, imageURL: anyURL())
     }
     
-    private func uniqueImageFeed() -> (models: [FeedItem], local: [LocalFeedImage]){
+    private func uniqueImageFeed() -> (models: [FeedImage], local: [LocalFeedImage]){
         let models = [uniqueImage(),uniqueImage()]
         let local = models.map{LocalFeedImage(id: $0.id, description: $0.description, location: $0.location, url: $0.imageURL)}
         return (models,local)
