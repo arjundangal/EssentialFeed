@@ -8,24 +8,25 @@
 import Foundation
 
 public final class LocalFeedLoader {
-   private let store : FeedStore
-   private let currentDate : () -> Date
+    private let store : FeedStore
+    private let currentDate : () -> Date
     
-  public typealias SaveResult = Error?
+    public typealias SaveResult = Error?
+    public typealias LoadResult = LoadFeedResult
     
-   public init(store : FeedStore, currentDate: @escaping () -> Date) {
+    public init(store : FeedStore, currentDate: @escaping () -> Date) {
         self.store = store
         self.currentDate = currentDate
     }
     
-   public func save(_ items : [FeedItem], completion: @escaping (Error?) -> Void){
+    public func save(_ items : [FeedItem], completion: @escaping (Error?) -> Void){
         store.deleteCachedFeed(items){[weak self] error in
             guard let self = self else {return}
-             if let cacheDeletionError = error{
+            if let cacheDeletionError = error{
                 completion(cacheDeletionError)
             }else{
                 self.cache(items, with: completion)
-
+                
             }
         }
     }
@@ -38,10 +39,14 @@ public final class LocalFeedLoader {
         }
     }
     
-    public func load(completion: @escaping (Error?) -> Void){
-        store.retrieve{ loadError in
-            completion(loadError)
-        }
+    public func load(completion: @escaping (LoadResult?) -> Void){
+        store.retrieve{ result in
+            if let result = result {
+                completion(.failure(result))
+            }else{
+                completion(.success([FeedItem]()))
+            }
+         }
         
     }
     
