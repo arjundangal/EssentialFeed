@@ -22,7 +22,7 @@ internal class FeedStoreSpy: FeedStore {
     
     private(set) var receivedMessages = [ReceivedMessages]()
     
-    func deleteCachedFeed(_ items : [FeedImage], completion : @escaping DeletionCompletion){
+    func deleteCachedFeed(completion : @escaping DeletionCompletion){
         deletionCompletions.append(completion)
         receivedMessages.append(.deleteCacheFeed)
     }
