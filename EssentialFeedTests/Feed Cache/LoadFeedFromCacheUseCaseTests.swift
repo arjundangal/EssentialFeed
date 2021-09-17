@@ -71,11 +71,11 @@ class LoadFeedFromCacheUseCaseTests: XCTestCase {
             store.completeRetrieval(with: feed.local, timeStamp: sevenDaysOldCache)
         }
     }
-
+    
     
     func test_load_deletesCacheOnRetrievalError(){
         let (sut,store) = makeSUT()
-
+        
         sut.load{ _ in }
         store.completeRetrieval(with: anyNSError())
         
@@ -84,25 +84,39 @@ class LoadFeedFromCacheUseCaseTests: XCTestCase {
     
     func test_load_doesNotdeletesCacheOnEmptyCache(){
         let (sut,store) = makeSUT()
-
+        
         sut.load{ _ in }
         store.completeRetrievalOnEmptyCache()
         
         XCTAssertEqual(store.receivedMessages, [.retrieval])
     }
-
+    
     func test_load_doesNotDeletesCacheWhenCacheIsLessThanSevenDaysOld(){
         let (sut,store) = makeSUT()
         let feed = uniqueImageFeed()
         let fixedCurrentDate = Date()
         let lessThanSevenDaysOldCache = fixedCurrentDate.adding(days: -7).adding(seconds: 1)
-
+        
         sut.load{ _ in }
         
         store.completeRetrieval(with: feed.local, timeStamp: lessThanSevenDaysOldCache)
         
         XCTAssertEqual(store.receivedMessages, [.retrieval])
-
+        
+    }
+    
+    func test_load_deletesCacheWhenCacheIsMoreThanSevenDaysOld(){
+        let (sut,store) = makeSUT()
+        let feed = uniqueImageFeed()
+        let fixedCurrentDate = Date()
+        let sevenDaysOldTimeStamp = fixedCurrentDate.adding(days: -10)
+        
+        sut.load{ _ in }
+        
+        store.completeRetrieval(with: feed.local, timeStamp:  sevenDaysOldTimeStamp)
+        
+        XCTAssertEqual(store.receivedMessages, [.retrieval,.deleteCacheFeed])
+        
     }
     
     
@@ -118,7 +132,7 @@ class LoadFeedFromCacheUseCaseTests: XCTestCase {
     private func expect(sut: LocalFeedLoader, toCompleteWith expectedResult: LoadFeedResult, when action: () -> Void){
         
         let exp = expectation(description: "Waiting for load completion")
-
+        
         sut.load { receivedResult in
             switch (receivedResult, expectedResult){
             case let (.success(receivedImages), .success(expectedImages)):
