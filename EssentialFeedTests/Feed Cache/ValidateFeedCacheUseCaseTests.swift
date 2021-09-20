@@ -8,7 +8,7 @@
 import XCTest
 import EssentialFeed
 
-class ValidateLocalFeedLoaderUseCaseTests: XCTestCase {
+class ValidateFeedCacheUseCaseTests: XCTestCase {
     
     func test_init_doesNotMessageStoreUponCreation(){
         let (_,store) = makeSUT()
@@ -22,6 +22,6 @@ class ValidateLocalFeedLoaderUseCaseTests: XCTestCase {
         checkForMemoryLeaks(store, file: file, line: line)
         checkForMemoryLeaks(sut, file: file, line: line)
         return (sut, store)
-    }
+    } 
 
 }

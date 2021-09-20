@@ -34,7 +34,6 @@ public final class LocalFeedLoader {
     private func cache(_ items : [FeedImage], with completion: @escaping (Error?) -> Void){
         store.insert(items.toLocal(), timestamp: self.currentDate()) {[weak self] (insertionError) in
             guard self != nil else {return}
-            
             completion(insertionError)
         }
     }
@@ -70,7 +69,6 @@ public final class LocalFeedLoader {
         }
         return currentDate() < maxCacheAge
      }
-    
 }
 
 private extension Array where Element == FeedImage{
